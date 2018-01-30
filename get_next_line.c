@@ -6,11 +6,12 @@
 /*   By: yabdulha <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/01/17 16:57:14 by yabdulha          #+#    #+#             */
-/*   Updated: 2018/01/30 09:54:52 by yabdulha         ###   ########.fr       */
+/*   Updated: 2018/01/30 13:11:57 by yabdulha         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
+
 /*
 char	*ft_strjoinfree(char *s1, char const *s2)
 {
@@ -49,19 +50,14 @@ char	*ft_strjoinfree(char *s1, char const *s2)
 
 struct s_list		*find_fd(int fd, t_list *lst)
 {
-	if (lst == NULL)
-		return (NULL);
-	while(lst->next)
+	while(lst)
 	{
-		printf("List item -> str: %s:\n", ((t_fd*)lst->con)->str);
 		if (((t_fd*)lst->con)->fide == fd)
 		{
-			printf("found fd\n");
 			return (lst);
 		}
 		lst = lst->next;
 	}
-	printf("find_fd returns NULL\n");
 	return (NULL);
 }
 
@@ -76,36 +72,31 @@ int					get_next_line(const int fd, char **line)
 	char					*position;
 	int						ret;
 	t_list					*current;
-	t_fd					fd_e;
+	t_fd					*fd_e;
 
-
-	printf("gnl fd: %d:\n", fd);
 	current = NULL;
 	if (fd < 0 || line == NULL || BUFF_SIZE <= 0)
 		return (-1);
-	*line = ft_strnew(BUFF_SIZE + 1);
-	// try finding fd in list.
+	*line = ft_strnew(BUFF_SIZE);
 	if (head && ((current = find_fd(fd, head))))
 		{
-			printf("found fd\n");
-			if (current->content)
+			if (((t_fd*)current->con)->str)
+			{
+				ft_strcpy(*line, ((t_fd*)current->con)->str);
+				if ((position = ft_strchr(*line, '\n')))
 				{
-					printf("Rest in aktuellem fd vorhaden\n");
-					ft_strcpy(*line, (char*)current->content);
-					if ((position = ft_strchr(*line, '\n')))
-					{
-						*position = '\0';
-						return (1);
-					}
+					*position = '\0';
+					ft_strcpy(((t_fd*)current->con)->str, position + 1);
+					return (1);
 				}
+			}
 		}
 	else
 	{
-		fd_e.fide = fd;
-
-		current = ft_lstnew(&fd_e, sizeof(fd_e));
-		current->content = (void*)&fd_e;
-		current->content_size = sizeof(fd_e);
+		fd_e = malloc(sizeof(t_fd));
+		fd_e->fide = fd;
+		fd_e->str = NULL;
+		current = ft_lstnew((void*)fd_e, sizeof(fd_e));
 	}
 	if (!(head))
 		head = current;
@@ -113,22 +104,25 @@ int					get_next_line(const int fd, char **line)
 		ft_lstadd(&head, current);
 	if (head == NULL || current == NULL || current->con == NULL)
 		return (-1);
-	if ((ret = read(current->con->fide, current->con->str, BUFF_SIZE) <= 0))
-		return (ret);
-	read(current->con->fide, current->con->str, BUFF_SIZE);
-	while (!(position = ft_strchr(current->con->str, '\n')) && ret >= 0)
+	((t_fd*)current->con)->str = malloc(sizeof(char) * BUFF_SIZE);
+	if ((ret = read(fd, ((t_fd*)current->con)->str, BUFF_SIZE)) <= 0)
 	{
-		*line = ft_strjoinfree(*line, current->con->str);
-		ret = read(current->con->fide, (char*)current->content, BUFF_SIZE);
-		if (ret == 0)
-			return (1);
+		free(((t_fd*)current->con)->str);
+		return (ret);
 	}
+	while (!(position = ft_strchr(((t_fd*)current->con)->str, '\n')) && ret > 0)
+	{
+		*line = ft_strjoinfree(*line, ((t_fd*)current->con)->str);
+		ret = read(fd, ((t_fd*)current->con)->str, BUFF_SIZE);
+	}
+	if (ret == 0)
+		return (1);
 	*position = '\0';
-	*line = ft_strjoinfree(*line, current->con->str);
-	ft_strcpy(current->con->str, position + 1);
+	*line = ft_strjoinfree(*line, ((t_fd*)current->con)->str);
+	ft_strcpy(((t_fd*)current->con)->str, position + 1);
 	return (1);
 }
-
+/*
 int					main()
 {
 	char			*line;
@@ -143,5 +137,10 @@ int					main()
 	printf("Result: [%s]\n", line);
 	get_next_line(fd, &line);
 	printf("Result: [%s]\n", line);
+	get_next_line(fd2, &line);
+	printf("Result: [%s]\n", line);
+	get_next_line(fd, &line);
+	printf("Result: [%s]\n", line);
 	return (0);
 }
+*/
