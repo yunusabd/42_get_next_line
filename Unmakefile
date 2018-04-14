@@ -1,7 +1,7 @@
 NAME = get_next_line
 CC = gcc
 FLAGS = -Wall -Werror -Wextra
-FILES = *.c
+FILES = get_next_line
 LIBFT = libft/*.c
 FT_C = $(patsubst %,%.c,$(FILES))
 OBJ = $(patsubst %,%.o,$(FILES))
@@ -11,7 +11,7 @@ OBJ = $(patsubst %,%.o,$(FILES))
 all: $(NAME)
 
 $(NAME):
-	$(CC) $(FLAGS) $(FILES) $(LIBFT)
+	$(CC) $(FLAGS) $(FT_C) $(LIBFT) -o $(NAME)
 
 clean:
 	/bin/rm -f $(OBJ)
